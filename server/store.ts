@@ -33,6 +33,7 @@ export interface CmsStore {
 const DATA_DIR = path.resolve(process.cwd(), 'data');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const STORE_FILE = path.join(DATA_DIR, 'cms_store.json');
+const SEED_STORE_FILE = path.resolve(process.cwd(), 'seed', 'cms_store.seed.json');
 const LEGACY_CMS_FILE = path.join(DATA_DIR, 'cms.json');
 
 let departmentsSyncedOnce = false;
@@ -68,6 +69,12 @@ export function ensureStoreReady(): CmsStore {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   getUploadsDir();
+
+  // First boot on a fresh persistent disk: the mounted volume shadows the repo's
+  // data/ directory, so restore the shipped content from the seed copy first.
+  if (!fs.existsSync(STORE_FILE) && fs.existsSync(SEED_STORE_FILE)) {
+    fs.copyFileSync(SEED_STORE_FILE, STORE_FILE);
+  }
 
   let store: CmsStore;
   if (fs.existsSync(STORE_FILE)) {
